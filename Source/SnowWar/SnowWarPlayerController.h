@@ -38,6 +38,18 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Input, meta=(AllowPrivateAccess = "true"))
 	UInputAction* AttackTargetAction;
 
+	/** Projectile class to spawn */
+	UPROPERTY(EditDefaultsOnly, Category = Projectile)
+	TSubclassOf<class ASWProjectile> ProjectileClass;
+
+	/** Sound to play each time we fire */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Gameplay)
+	USoundBase* FireSound;
+
+	/** Gun muzzle's offset from the characters location */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Gameplay)
+	FVector MuzzleOffset;
+
 protected:
 	virtual void SetupInputComponent() override;
 	
@@ -47,6 +59,8 @@ protected:
 	void OnInputStarted();
 	void OnAttackTargetTriggered();
 	void OnAttackTargetReleased();
+
+	void FireProjectile(float InPressTime);
 
 private:
 	FVector CachedTarget;

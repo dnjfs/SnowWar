@@ -2,16 +2,20 @@
 
 #include "SnowWarPlayerController.h"
 #include "GameFramework/Pawn.h"
-#include "Blueprint/AIBlueprintHelperLibrary.h"
 #include "NiagaraSystem.h"
 #include "NiagaraFunctionLibrary.h"
-#include "SnowWarCharacter.h"
-#include "Engine/World.h"
 #include "EnhancedInputComponent.h"
-#include "InputActionValue.h"
 #include "EnhancedInputSubsystems.h"
+#include "InputActionValue.h"
+
+#include "Engine/World.h"
 #include "Engine/LocalPlayer.h"
 #include "Kismet/KismetMathLibrary.h"
+#include "Kismet/GameplayStatics.h"
+
+#include "SnowWarCharacter.h"
+#include "SWProjectile.h"
+
 
 DEFINE_LOG_CATEGORY(LogTemplateCharacter);
 
@@ -85,5 +89,47 @@ void ASnowWarPlayerController::OnAttackTargetReleased()
 	if (FollowTime >= LongPressThreshold)
 		UNiagaraFunctionLibrary::SpawnSystemAtLocation(this, FXCursor, CachedTarget, FRotator::ZeroRotator, FVector(1.f, 1.f, 1.f), true, true, ENCPoolMethod::None, true);
 
+	FireProjectile(FollowTime);
+
 	FollowTime = 0.f;
+}
+
+void ASnowWarPlayerController::FireProjectile(float InPressTime)
+{
+	// Try and fire a projectile
+	if (ProjectileClass == nullptr)
+		return;
+
+	UWorld* const World = GetWorld();
+	if (World == nullptr)
+		return;
+
+	APawn* ControlledPawn = GetPawn();
+	if (ControlledPawn == nullptr)
+		return;
+
+	AActor* OwnerCharacter = GetOwner();
+	if (OwnerCharacter == nullptr)
+		OwnerCharacter = ControlledPawn;
+
+	FRotator ProjectileSpawnRotation = UKismetMathLibrary::FindLookAtRotation(ControlledPawn->GetActorLocation(), CachedTarget);
+	// Z축을 기준으로만 회전되도록 고정 (Yaw만 바뀜)
+	ProjectileSpawnRotation.Pitch = 0.f;
+	ProjectileSpawnRotation.Roll = 0.f;
+
+	// MuzzleOffset is in camera space, so transform it to world space before offsetting from the character location to find the final muzzle position
+	const FVector ProjectileSpawnLocation = OwnerCharacter->GetActorLocation() + ProjectileSpawnRotation.RotateVector(MuzzleOffset);
+
+	// Set Spawn Collision Handling Override
+	FActorSpawnParameters ActorSpawnParams;
+	ActorSpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButDontSpawnIfColliding;
+
+	// Spawn the projectile at the muzzle
+	ASWProjectile* SnowBall = World->SpawnActor<ASWProjectile>(ProjectileClass, ProjectileSpawnLocation, ProjectileSpawnRotation, ActorSpawnParams);
+	if (SnowBall != nullptr)
+		SnowBall->SetSnowBallSpeed(InPressTime);
+
+	// Try and play the sound if specified
+	if (FireSound != nullptr)
+		UGameplayStatics::PlaySoundAtLocation(this, FireSound, ControlledPawn->GetActorLocation());
 }
