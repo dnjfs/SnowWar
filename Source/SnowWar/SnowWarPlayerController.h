@@ -22,9 +22,9 @@ class ASnowWarPlayerController : public APlayerController
 public:
 	ASnowWarPlayerController();
 
-	/** Time Threshold to know if it was a short press */
+	// 길게 누르는 시간 한계점
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input)
-	float ShortPressThreshold;
+	float LongPressThreshold;
 
 	/** FX Class that we will spawn when clicking */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input)
@@ -36,32 +36,21 @@ public:
 	
 	/** Jump Input Action */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Input, meta=(AllowPrivateAccess = "true"))
-	UInputAction* SetDestinationClickAction;
-
-	/** Jump Input Action */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Input, meta=(AllowPrivateAccess = "true"))
-	UInputAction* SetDestinationTouchAction;
+	UInputAction* AttackTargetAction;
 
 protected:
-	/** True if the controlled character should navigate to the mouse cursor. */
-	uint32 bMoveToMouseCursor : 1;
-
 	virtual void SetupInputComponent() override;
 	
-	// To add mapping context
 	virtual void BeginPlay();
 
-	/** Input handlers for SetDestination action. */
+	/** Input handlers for AttackTarget action. */
 	void OnInputStarted();
-	void OnSetDestinationTriggered();
-	void OnSetDestinationReleased();
-	void OnTouchTriggered();
-	void OnTouchReleased();
+	void OnAttackTargetTriggered();
+	void OnAttackTargetReleased();
 
 private:
-	FVector CachedDestination;
+	FVector CachedTarget;
 
-	bool bIsTouch; // Is it a touch device
 	float FollowTime; // For how long it has been pressed
 };
 
