@@ -3,8 +3,12 @@
 
 #include "SWProjectile.h"
 
+#include "Engine/DamageEvents.h"
 #include "GameFramework/ProjectileMovementComponent.h"
 #include "Components/SphereComponent.h"
+
+#include "SnowWarCharacter.h"
+#include "SnowWarPlayerController.h"
 
 ASWProjectile::ASWProjectile()
 {
@@ -33,12 +37,23 @@ ASWProjectile::ASWProjectile()
 	InitialLifeSpan = 3.0f;
 }
 
+void ASWProjectile::SetProjectileInfo(const FProjectileInfo& InProjectileInfo)
+{
+	OwnerController = InProjectileInfo.PlayerController;
+	if (OwnerController.IsValid())
+		Team = OwnerController.Get()->GetTeam();
+
+	SetSnowBallSpeed(InProjectileInfo.HoldingTime);
+}
+
 void ASWProjectile::SetSnowBallSpeed(float InPressTime)
 {
 	if (InPressTime <= MinPressTime)
 		InPressTime = MinPressTime;
 	else if (InPressTime >= MaxPressTime)
 		InPressTime = MaxPressTime;
+
+	DamageMultiple = InPressTime;
 
 	// 누르는 시간에 비례하여 눈덩이 속도 조절
 	const float Multiple = InPressTime / MaxPressTime;
@@ -49,5 +64,32 @@ void ASWProjectile::SetSnowBallSpeed(float InPressTime)
 
 void ASWProjectile::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
 {
+	do
+	{
+		auto Character = Cast<ASnowWarCharacter>(OtherActor);
+		if (Character == nullptr)
+			break;
+
+		if (OwnerController.IsValid() == false)
+			break;
+
+		ESWTeamType MyTeam = OwnerController.Get()->GetTeam();
+		ESWTeamType OtherTeam = ESWTeamType::None;
+		if (auto OtherController = Cast<ASnowWarPlayerController>(Character->GetController()))
+			OtherTeam = OtherController->GetTeam();
+
+		if (MyTeam == OtherTeam)
+			break;
+
+		auto Controller = Cast<AController>(OwnerController.Get());
+		if (Controller == nullptr)
+			break;
+
+		FDamageEvent DamageEvent;
+		OtherActor->TakeDamage(BaseDamage * DamageMultiple, DamageEvent, Controller, this);
+
+		break;
+	} while(true);
+
 	Destroy();
 }

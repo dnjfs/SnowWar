@@ -3,11 +3,19 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "SWEnum.h"
 #include "GameFramework/Actor.h"
 #include "SWProjectile.generated.h"
 
 class USphereComponent;
 class UProjectileMovementComponent;
+class ASnowWarPlayerController;
+
+struct FProjectileInfo
+{
+	TObjectPtr<ASnowWarPlayerController> PlayerController = nullptr;
+	float HoldingTime = 0.f;
+};
 
 UCLASS()
 class SNOWWAR_API ASWProjectile : public AActor
@@ -17,6 +25,7 @@ class SNOWWAR_API ASWProjectile : public AActor
 public:	
 	ASWProjectile();
 
+	void SetProjectileInfo(const FProjectileInfo& InProjectileInfo);
 	void SetSnowBallSpeed(float InPressTime);
 
 protected:
@@ -37,4 +46,16 @@ private:
 	float MinPressTime = 0.5f;
 	UPROPERTY(EditDefaultsOnly, Category = Movement, meta = (AllowPrivateAccess = "true"))
 	float MaxPressTime = 2.f;
+
+	UPROPERTY(EditDefaultsOnly, Category = Projectile, meta = (AllowPrivateAccess = "true"))
+	float BaseDamage = 10.f;
+
+	UPROPERTY(Transient)
+	TWeakObjectPtr<ASnowWarPlayerController> OwnerController;
+
+	UPROPERTY(Transient)
+	ESWTeamType Team = ESWTeamType::None;
+
+	UPROPERTY(Transient)
+	float DamageMultiple = 0.f;
 };

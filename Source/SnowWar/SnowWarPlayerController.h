@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "SWEnum.h"
 #include "Templates/SubclassOf.h"
 #include "GameFramework/PlayerController.h"
 #include "SnowWarPlayerController.generated.h"
@@ -21,6 +22,8 @@ class ASnowWarPlayerController : public APlayerController
 
 public:
 	ASnowWarPlayerController();
+
+	ESWTeamType GetTeam() { return Team; }
 
 	// 길게 누르는 시간 한계점
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input)
@@ -66,6 +69,9 @@ private:
 	FVector CachedTarget;
 
 	float FollowTime; // For how long it has been pressed
+
+	UPROPERTY(Transient)
+	ESWTeamType Team = ESWTeamType::None;
 };
 
 

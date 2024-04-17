@@ -27,6 +27,7 @@ public:
 
 protected:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser) override;
 
 	// Called for movement input
 	void Move(const FInputActionValue& Value);
@@ -43,5 +44,8 @@ private:
 	// Move Input Action
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	class UInputAction* MoveAction;
+
+	UPROPERTY(Transient, EditDefaultsOnly, Category = Stat)
+	int32 Life = 0;
 };
 

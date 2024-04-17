@@ -37,6 +37,9 @@ void ASnowWarPlayerController::BeginPlay()
 	{
 		Subsystem->AddMappingContext(DefaultMappingContext, 0);
 	}
+
+	// 임시 (추후 로그인 시 처리)
+	Team = ESWTeamType::Team1;
 }
 
 void ASnowWarPlayerController::SetupInputComponent()
@@ -127,7 +130,13 @@ void ASnowWarPlayerController::FireProjectile(float InPressTime)
 	// Spawn the projectile at the muzzle
 	ASWProjectile* SnowBall = World->SpawnActor<ASWProjectile>(ProjectileClass, ProjectileSpawnLocation, ProjectileSpawnRotation, ActorSpawnParams);
 	if (SnowBall != nullptr)
-		SnowBall->SetSnowBallSpeed(InPressTime);
+	{
+		FProjectileInfo ProjInfo;
+		ProjInfo.PlayerController = this;
+		ProjInfo.HoldingTime = InPressTime;
+
+		SnowBall->SetProjectileInfo(ProjInfo);
+	}
 
 	// Try and play the sound if specified
 	if (FireSound != nullptr)

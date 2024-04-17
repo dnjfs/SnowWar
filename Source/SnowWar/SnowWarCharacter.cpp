@@ -10,8 +10,11 @@
 #include "GameFramework/SpringArmComponent.h"
 #include "Materials/Material.h"
 #include "Engine/World.h"
+#include "Engine/DamageEvents.h"
 #include "EnhancedInputComponent.h"
 #include "InputActionValue.h"
+
+#include "SnowWarPlayerController.h"
 
 ASnowWarCharacter::ASnowWarCharacter()
 {
@@ -56,6 +59,20 @@ void ASnowWarCharacter::SetupPlayerInputComponent(class UInputComponent* PlayerI
 {
 	if (UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(PlayerInputComponent))
 		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &ASnowWarCharacter::Move);
+}
+
+float ASnowWarCharacter::TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser)
+{
+	Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
+
+	Life -= (int32)DamageAmount;
+
+	UE_LOG(LogTemp, Warning, TEXT("%s의 현재 체력: %d"), *GetName(), Life);
+
+	if (Life <= 0)
+		Destroy();
+
+	return DamageAmount;
 }
 
 void ASnowWarCharacter::Move(const FInputActionValue& Value)
