@@ -7,7 +7,10 @@
 #include "SnowWarCharacter.generated.h"
 
 class UInputAction;
+class UWidgetComponent;
 struct FInputActionValue;
+
+DECLARE_MULTICAST_DELEGATE_TwoParams(FOnChangedLife, int32 Life, int32 MaxLife);
 
 UCLASS(Blueprintable)
 class ASnowWarCharacter : public ACharacter
@@ -17,15 +20,13 @@ class ASnowWarCharacter : public ACharacter
 public:
 	ASnowWarCharacter();
 
-	// Called every frame.
-	virtual void Tick(float DeltaSeconds) override;
-
 	/** Returns TopDownCameraComponent subobject **/
 	FORCEINLINE class UCameraComponent* GetTopDownCameraComponent() const { return TopDownCameraComponent; }
 	/** Returns CameraBoom subobject **/
 	FORCEINLINE class USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
 
 protected:
+	virtual void BeginPlay() override;
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser) override;
 
@@ -45,7 +46,15 @@ private:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	class UInputAction* MoveAction;
 
-	UPROPERTY(Transient, EditDefaultsOnly, Category = Stat)
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Widget, Meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<class UWidgetComponent> HPWidgetComponent;
+
+	UPROPERTY(EditDefaultsOnly, Category = Stat)
+	int32 MaxLife = 100;
+
+	UPROPERTY(Transient)
 	int32 Life = 0;
+
+	FOnChangedLife OnChangedLife;
 };
 

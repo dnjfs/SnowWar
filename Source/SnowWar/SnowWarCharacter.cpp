@@ -5,6 +5,7 @@
 #include "Camera/CameraComponent.h"
 #include "Components/DecalComponent.h"
 #include "Components/CapsuleComponent.h"
+#include "Components/WidgetComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/PlayerController.h"
 #include "GameFramework/SpringArmComponent.h"
@@ -15,6 +16,7 @@
 #include "InputActionValue.h"
 
 #include "SnowWarPlayerController.h"
+#include "SWHPWidget.h"
 
 ASnowWarCharacter::ASnowWarCharacter()
 {
@@ -45,14 +47,25 @@ ASnowWarCharacter::ASnowWarCharacter()
 	TopDownCameraComponent->SetupAttachment(CameraBoom, USpringArmComponent::SocketName);
 	TopDownCameraComponent->bUsePawnControlRotation = false; // Camera does not rotate relative to arm
 
+	HPWidgetComponent = CreateDefaultSubobject<UWidgetComponent>(TEXT("HPWidgetComponent"));
+	HPWidgetComponent->SetupAttachment(GetMesh());
+	HPWidgetComponent->SetRelativeLocation(FVector(0.0f, 0.0f, 180.0f));
+
 	// Activate ticking in order to update the cursor every frame.
 	PrimaryActorTick.bCanEverTick = true;
 	PrimaryActorTick.bStartWithTickEnabled = true;
+
+	Life = MaxLife;
 }
 
-void ASnowWarCharacter::Tick(float DeltaSeconds)
+void ASnowWarCharacter::BeginPlay()
 {
-    Super::Tick(DeltaSeconds);
+	Super::BeginPlay();
+
+	if (const auto HPBar = Cast<USWHPWidget>(HPWidgetComponent->GetWidget()))
+		OnChangedLife.AddUObject(HPBar, &USWHPWidget::UpdateHPBar);
+
+	OnChangedLife.Broadcast(Life, MaxLife);
 }
 
 void ASnowWarCharacter::SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent)
@@ -67,10 +80,15 @@ float ASnowWarCharacter::TakeDamage(float DamageAmount, struct FDamageEvent cons
 
 	Life -= (int32)DamageAmount;
 
-	UE_LOG(LogTemp, Warning, TEXT("%s의 현재 체력: %d"), *GetName(), Life);
-
 	if (Life <= 0)
+	{
+		Life = 0;
 		Destroy();
+	}
+
+	UE_LOG(LogTemp, Warning, TEXT("%s의 현재 체력: %d / %d"), *GetName(), Life, MaxLife);
+
+	OnChangedLife.Broadcast(Life, MaxLife);
 
 	return DamageAmount;
 }

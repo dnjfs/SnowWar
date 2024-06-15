@@ -48,7 +48,7 @@ private:
 	float MaxPressTime = 2.f;
 
 	UPROPERTY(EditDefaultsOnly, Category = Projectile, meta = (AllowPrivateAccess = "true"))
-	float BaseDamage = 10.f;
+	float BaseDamage = 20.f;
 
 	UPROPERTY(Transient)
 	TWeakObjectPtr<ASnowWarPlayerController> OwnerController;
