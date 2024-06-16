@@ -10,6 +10,7 @@
 class USphereComponent;
 class UProjectileMovementComponent;
 class ASnowWarPlayerController;
+class UNiagaraSystem;
 
 struct FProjectileInfo
 {
@@ -49,6 +50,9 @@ private:
 
 	UPROPERTY(EditDefaultsOnly, Category = Projectile, meta = (AllowPrivateAccess = "true"))
 	float BaseDamage = 20.f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Projectile, meta = (AllowPrivateAccess = "true"))
+	UNiagaraSystem* SnowEffect;
 
 	UPROPERTY(Transient)
 	TWeakObjectPtr<ASnowWarPlayerController> OwnerController;

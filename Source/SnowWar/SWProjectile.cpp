@@ -2,6 +2,8 @@
 
 
 #include "SWProjectile.h"
+#include "NiagaraSystem.h"
+#include "NiagaraFunctionLibrary.h"
 
 #include "Engine/DamageEvents.h"
 #include "GameFramework/ProjectileMovementComponent.h"
@@ -64,6 +66,10 @@ void ASWProjectile::SetSnowBallSpeed(float InPressTime)
 
 void ASWProjectile::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
 {
+	FRotator Rotator = Hit.Normal.Rotation();
+	Rotator.Pitch -= 90.f;
+	UNiagaraFunctionLibrary::SpawnSystemAtLocation(this, SnowEffect, Hit.Location, Rotator);
+
 	do
 	{
 		auto Character = Cast<ASnowWarCharacter>(OtherActor);
