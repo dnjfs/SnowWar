@@ -66,9 +66,9 @@ void ASWProjectile::SetSnowBallSpeed(float InPressTime)
 
 void ASWProjectile::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
 {
-	FRotator Rotator = Hit.Normal.Rotation();
-	Rotator.Pitch -= 90.f;
-	UNiagaraFunctionLibrary::SpawnSystemAtLocation(this, SnowEffect, Hit.Location, Rotator);
+	FRotator Rotation = Hit.Normal.Rotation();
+	Rotation.Pitch -= 90.f; // 회전값 보정
+	UNiagaraFunctionLibrary::SpawnSystemAtLocation(this, SnowEffect, Hit.Location, Rotation);
 
 	do
 	{
