@@ -30,8 +30,8 @@ ASWProjectile::ASWProjectile()
 	// Use a ProjectileMovementComponent to govern this projectile's movement
 	ProjectileMovement = CreateDefaultSubobject<UProjectileMovementComponent>(TEXT("ProjectileComp"));
 	ProjectileMovement->UpdatedComponent = CollisionComp;
-	ProjectileMovement->InitialSpeed = 2000.f;
-	ProjectileMovement->MaxSpeed = 2000.f;
+	ProjectileMovement->InitialSpeed = 1500.f;
+	ProjectileMovement->MaxSpeed = 1500.f;
 	ProjectileMovement->bRotationFollowsVelocity = true;
 	ProjectileMovement->bShouldBounce = true;
 
@@ -39,29 +39,25 @@ ASWProjectile::ASWProjectile()
 	InitialLifeSpan = 3.0f;
 }
 
-void ASWProjectile::SetProjectileInfo(const FProjectileInfo& InProjectileInfo)
+void ASWProjectile::SetProjectileInfo(float InPressTime)
 {
-	OwnerController = InProjectileInfo.PlayerController;
-	if (OwnerController.IsValid())
-		Team = OwnerController.Get()->GetTeam();
+	Team = Cast<ASnowWarPlayerController>(GetOwner())->GetTeam();
 
-	SetSnowBallSpeed(InProjectileInfo.HoldingTime);
+	SetSnowBallSpeed(InPressTime);
 }
 
 void ASWProjectile::SetSnowBallSpeed(float InPressTime)
 {
-	if (InPressTime <= MinPressTime)
-		InPressTime = MinPressTime;
-	else if (InPressTime >= MaxPressTime)
-		InPressTime = MaxPressTime;
+	InPressTime = FMath::Clamp(InPressTime, MinPressTime, MaxPressTime);
 
 	DamageMultiple = InPressTime;
 
 	// 누르는 시간에 비례하여 눈덩이 속도 조절
 	const float Multiple = InPressTime / MaxPressTime;
-	ProjectileMovement->MaxSpeed = ProjectileMovement->MaxSpeed * Multiple;
 
-	UE_LOG(LogTemp, Warning, TEXT("Time: %f / Speed: %f"), InPressTime, ProjectileMovement->MaxSpeed);
+	ProjectileMovement->InitialSpeed = (ProjectileMovement->MaxSpeed - MinSpeed) * Multiple + MinSpeed;
+
+	UE_LOG(LogTemp, Warning, TEXT("Time: %f / Speed: %f"), InPressTime, ProjectileMovement->InitialSpeed);
 }
 
 void ASWProjectile::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
@@ -76,10 +72,11 @@ void ASWProjectile::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPri
 		if (Character == nullptr)
 			break;
 
-		if (OwnerController.IsValid() == false)
+		ASnowWarPlayerController* PC = Cast<ASnowWarPlayerController>(GetOwner());
+		if (PC == nullptr)
 			break;
 
-		ESWTeamType MyTeam = OwnerController.Get()->GetTeam();
+		ESWTeamType MyTeam = PC->GetTeam();
 		ESWTeamType OtherTeam = ESWTeamType::None;
 		if (auto OtherController = Cast<ASnowWarPlayerController>(Character->GetController()))
 			OtherTeam = OtherController->GetTeam();
@@ -87,15 +84,8 @@ void ASWProjectile::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPri
 		if (MyTeam == OtherTeam)
 			break;
 
-		auto Controller = Cast<AController>(OwnerController.Get());
-		if (Controller == nullptr)
-			break;
-
-		FDamageEvent DamageEvent;
-		OtherActor->TakeDamage(BaseDamage * DamageMultiple, DamageEvent, Controller, this);
-
-		break;
-	} while(true);
+		OtherActor->TakeDamage(BaseDamage * DamageMultiple, FDamageEvent(), PC, this);
+	} while(false);
 
 	Destroy();
 }

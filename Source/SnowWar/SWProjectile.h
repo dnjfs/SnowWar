@@ -12,12 +12,6 @@ class UProjectileMovementComponent;
 class ASnowWarPlayerController;
 class UNiagaraSystem;
 
-struct FProjectileInfo
-{
-	TObjectPtr<ASnowWarPlayerController> PlayerController = nullptr;
-	float HoldingTime = 0.f;
-};
-
 UCLASS()
 class SNOWWAR_API ASWProjectile : public AActor
 {
@@ -26,7 +20,7 @@ class SNOWWAR_API ASWProjectile : public AActor
 public:	
 	ASWProjectile();
 
-	void SetProjectileInfo(const FProjectileInfo& InProjectileInfo);
+	void SetProjectileInfo(float InPressTime);
 	void SetSnowBallSpeed(float InPressTime);
 
 protected:
@@ -55,11 +49,11 @@ private:
 	UNiagaraSystem* SnowEffect;
 
 	UPROPERTY(Transient)
-	TWeakObjectPtr<ASnowWarPlayerController> OwnerController;
-
-	UPROPERTY(Transient)
 	ESWTeamType Team = ESWTeamType::None;
 
 	UPROPERTY(Transient)
 	float DamageMultiple = 0.f;
+
+	UPROPERTY(EditDefaultsOnly)
+	float MinSpeed = 500.f;
 };

@@ -111,31 +111,19 @@ void ASnowWarPlayerController::FireProjectile(float InPressTime)
 	if (ControlledPawn == nullptr)
 		return;
 
-	AActor* OwnerCharacter = GetOwner();
-	if (OwnerCharacter == nullptr)
-		OwnerCharacter = ControlledPawn;
-
 	FRotator ProjectileSpawnRotation = UKismetMathLibrary::FindLookAtRotation(ControlledPawn->GetActorLocation(), CachedTarget);
 	// Z축을 기준으로만 회전되도록 고정 (Yaw만 바뀜)
 	ProjectileSpawnRotation.Pitch = 0.f;
 	ProjectileSpawnRotation.Roll = 0.f;
 
 	// MuzzleOffset is in camera space, so transform it to world space before offsetting from the character location to find the final muzzle position
-	const FVector ProjectileSpawnLocation = OwnerCharacter->GetActorLocation() + ProjectileSpawnRotation.RotateVector(MuzzleOffset);
+	const FVector ProjectileSpawnLocation = ControlledPawn->GetActorLocation() + ProjectileSpawnRotation.RotateVector(MuzzleOffset);
 
-	// Set Spawn Collision Handling Override
-	FActorSpawnParameters ActorSpawnParams;
-	ActorSpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButDontSpawnIfColliding;
-
-	// Spawn the projectile at the muzzle
-	ASWProjectile* SnowBall = World->SpawnActor<ASWProjectile>(ProjectileClass, ProjectileSpawnLocation, ProjectileSpawnRotation, ActorSpawnParams);
-	if (SnowBall != nullptr)
+	FTransform SpawnTransform(ProjectileSpawnRotation, ProjectileSpawnLocation);
+	if (ASWProjectile* SnowBall = World->SpawnActorDeferred<ASWProjectile>(ProjectileClass, SpawnTransform, this, ControlledPawn, ESpawnActorCollisionHandlingMethod::AlwaysSpawn))
 	{
-		FProjectileInfo ProjInfo;
-		ProjInfo.PlayerController = this;
-		ProjInfo.HoldingTime = InPressTime;
-
-		SnowBall->SetProjectileInfo(ProjInfo);
+		SnowBall->SetProjectileInfo(InPressTime);
+		SnowBall->FinishSpawning(SpawnTransform);
 	}
 
 	// Try and play the sound if specified
